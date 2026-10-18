@@ -6,8 +6,8 @@
 .SUFFIXES:
 MAKEFLAGS += --warn-undefined-variables
 MAKEFLAGS += --no-builtin-rules
-SHELL := /usr/bin/bash
-.SHELLFLAGS := -euo pipefail -c
+SHELL = /bin/sh
+.SHELLFLAGS := -ec
 
 .DEFAULT_GOAL := all
 
