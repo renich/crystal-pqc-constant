@@ -1,0 +1,27 @@
+---
+name: crystal-pqc-constant
+version: 0.1.0
+authors:
+  - Rénich Bon Ćirić <renich@evalinux.com>
+
+description: \
+  Post-Quantum Cryptography (NIST FIPS 203 ML-KEM and FIPS 204 ML-DSA)
+  with OpenSSL 3.5+ EVP_PKEY bindings and libsodium guarded memory.
+
+license: GPL-3.0-or-later
+
+crystal: '>= 1.21.0'
+
+targets:
+  ameba:
+    main: lib/ameba/bin/ameba.cr
+  flaw:
+    main: lib/flaw/src/main.cr
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    branch: master
+  flaw:
+    github: kdairatchi/flaw
+...

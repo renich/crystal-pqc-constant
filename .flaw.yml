@@ -1,0 +1,10 @@
+# Flaw SAST Security Scanner Configuration — https://github.com/kdairatchi/flaw
+version: 1
+
+exclude:
+  - lib/
+  - bin/
+  - .shards/
+  - .agents/
+  - docs/
+  - scratch/

@@ -1,0 +1,25 @@
+# Crystal build and dependency artifacts
+/lib/
+/bin/
+/.shards/
+/shard.lock
+
+# Documentation build output
+/docs/build/
+/docs/technical/api/
+/public/
+
+# Coverage and testing artifacts
+/coverage/
+/spec/all_specs.cr
+/spec_runner
+
+# Agent and scratch state
+/.agents/
+/scratch/
+
+# System and editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*~
