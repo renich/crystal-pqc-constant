@@ -1,0 +1,68 @@
+direction: right
+
+vars: {
+  d2-config: {
+    layout-engine: dagre
+    theme-id: 4
+    pad: 40
+    center: true
+  }
+}
+
+classes: {
+  milestone_box: {
+    style: {
+      stroke: "#2F855A"
+      stroke-width: 2
+      border-radius: 8
+      fill: "#F0FFF4"
+    }
+  }
+  task_done: {
+    shape: rectangle
+    style: {
+      stroke: "#276749"
+      stroke-width: 2
+      border-radius: 6
+      fill: "#C6F6D5"
+      font: mono
+    }
+  }
+}
+
+m1_1: "Milestone 1.1: Core Cryptographic Runtime" {
+  class: milestone_box
+
+  task101: "TASK-101: Guarded Memory & Exceptions\nLibSodium, Sodium, SecureBuffer, PQCError\nFulfills: [FUNC-003], [FUNC-005], [TECH-001]" {
+    class: task_done
+  }
+
+  task102: "TASK-102: OpenSSL 3.5+ EVP_PKEY Bridge\nLibCryptoPQC & EvpKeyHelper\nFulfills: [FUNC-001], [FUNC-002], [FUNC-004], [TECH-002]" {
+    class: task_done
+  }
+
+  task103: "TASK-103: NIST FIPS 203 ML-KEM\nKEMVariant, SharedSecret, MLKEMKeyPair\nFulfills: [FUNC-001], [FUNC-003], [FUNC-004], [TECH-003]" {
+    class: task_done
+  }
+
+  task104: "TASK-104: NIST FIPS 204 ML-DSA\nDSAVariant & MLDSAKeyPair\nFulfills: [FUNC-002], [FUNC-003], [FUNC-004], [TECH-003]" {
+    class: task_done
+  }
+
+  task101 -> task102: "Unblocks"
+  task101 -> task103: "Unblocks"
+  task101 -> task104: "Unblocks"
+  task102 -> task103: "Unblocks"
+  task102 -> task104: "Unblocks"
+}
+
+m1_2: "Milestone 1.2: Quality Gates & Documentation" {
+  class: milestone_box
+
+  task105: "TASK-105: Concurrency Specs, SAST & Docs\n39 Specs, Ameba, Flaw, Sphinx Portal\nFulfills: [FUNC-005], [TECH-004], [TECH-005]" {
+    class: task_done
+  }
+}
+
+m1_1.task103 -> m1_2.task105: "Unblocks"
+m1_1.task104 -> m1_2.task105: "Unblocks"

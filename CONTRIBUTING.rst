@@ -2,12 +2,12 @@
 Contributing to crystal-pqc-constant
 ====================================
 
-Thank you for your interest in contributing to ``crystal-pqc-constant``. We welcome contributions from human engineers and autonomous agents who share our commitment to cryptographic rigor, memory safety, and empirical verification.
+Thank you for your interest in contributing to ``crystal-pqc-constant``. We welcome contributions from human engineers and autonomous agents who share our commitment to software excellence, cryptographic rigor, and empirical verification.
 
 Code of Honor
 =============
 
-All contributors are expected to uphold the principles defined in `CODE_OF_HONOR.rst <CODE_OF_HONOR.rst>`__. We build resilient, well-tested software, demand intellectual honesty, operate transparently, and verify all library behaviors empirically.
+All contributors must uphold the principles defined in `CODE_OF_HONOR.rst <CODE_OF_HONOR.rst>`__. We build resilient, well-tested software, demand intellectual honesty, operate transparently, and verify all library behaviors empirically.
 
 Development Workflow
 ====================
@@ -31,13 +31,17 @@ Setting Up the Workspace
       git clone git@gitlab.com:renich/crystal-pqc-constant.git
       cd crystal-pqc-constant
 
-#. Install development dependencies and run verification gates:
+#. Install development dependencies:
 
    .. code-block:: bash
 
       shards install
-      make all
-      make doc-check
+
+#. Verify the test suite, static analysis, and documentation gates:
+
+   .. code-block:: bash
+
+      make check
 
 Testing and Quality Standards
 =============================
@@ -72,7 +76,7 @@ We enforce the Conventional Commits specification:
 
 * ``feat(kem): add ML-KEM-768 encapsulation and decapsulation``
 * ``feat(dsa): add ML-DSA-65 detached signing and verification``
-* ``docs(adrs): document OpenSSL 3.5 and libsodium guarded memory architecture``
-* ``test(spec): add concurrent fiber stress tests``
+* ``docs(adrs): record decision on OpenSSL 3.5 and libsodium guarded memory``
+* ``test(spec): add concurrent fiber stress specs``
 
 All commits must be signed and authored with full technical ownership.

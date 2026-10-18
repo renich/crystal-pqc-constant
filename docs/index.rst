@@ -18,22 +18,22 @@ Documentation Architecture
      - Entrypoint
    * - **Business & Strategy**
      - Post-quantum migration vision, ecosystem goals, and user personas.
-     - `Business Specifications <business/spec.rst>`__
+     - :doc:`business/spec`
    * - **Functional Specifications**
-     - Requirements ``[FUNC-001]``..``[FUNC-005]``, behavioral contracts, and interfaces.
-     - `Functional Specifications <functional/spec.rst>`__
+     - Requirements ``[FUNC-001]``..``[FUNC-007]``, behavioral contracts, and interfaces.
+     - :doc:`functional/spec`
    * - **Technical Architecture**
-     - OpenSSL 3.5+ ``EVP_PKEY`` bindings, ``libsodium`` guarded memory, threat model, and release protocol.
-     - `Technical Architecture <technical/spec.rst>`__
+     - Technical specifications ``[TECH-001]``..``[TECH-007]``, OpenSSL 3.5+ ``EVP_PKEY`` bindings, ``libsodium`` guarded memory, threat model, and release protocol.
+     - :doc:`technical/spec`
    * - **Architecture Decisions**
      - Immutable Architecture Decision Records and trade-off analyses.
-     - `Architecture Decisions <adrs/index.rst>`__
+     - :doc:`adrs/index`
    * - **Project Roadmap**
      - Sequenced phase milestones, delivery tracking, and verification audits.
-     - `Project Roadmap <project/roadmap.rst>`__
+     - :doc:`project/roadmap`
    * - **User Guides**
      - Integration guides, code examples, and API tutorials.
-     - `User Manual <user/index.rst>`__
+     - :doc:`user/index`
    * - **Crystal API Reference**
      - Compiler-generated API documentation covering all classes, enums, and modules.
      - `Crystal API Reference <technical/api/index.html>`__

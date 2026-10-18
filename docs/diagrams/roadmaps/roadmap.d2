@@ -1,0 +1,79 @@
+direction: right
+
+vars: {
+  d2-config: {
+    layout-engine: dagre
+    theme-id: 4
+    pad: 40
+    center: true
+  }
+}
+
+classes: {
+  phase_done: {
+    shape: rectangle
+    style: {
+      stroke: "#2F855A"
+      stroke-width: 2
+      border-radius: 8
+      fill: "#F0FFF4"
+    }
+  }
+  phase_planned: {
+    shape: rectangle
+    style: {
+      stroke: "#2B6CB0"
+      stroke-width: 2
+      border-radius: 8
+      fill: "#EBF8FF"
+    }
+  }
+  milestone_done: {
+    shape: step
+    style: {
+      stroke: "#2F855A"
+      stroke-width: 2
+      fill: "#C6F6D5"
+      font: mono
+    }
+  }
+  milestone_planned: {
+    shape: step
+    style: {
+      stroke: "#3182CE"
+      stroke-width: 2
+      fill: "#BEE3F8"
+      font: mono
+    }
+  }
+}
+
+phase1: "Phase 1: MVP v0.1.0 (Completed)" {
+  class: phase_done
+
+  m1_1: "Milestone 1.1\nGuarded Memory & OpenSSL 3.5+ Core\n[FUNC-001..005] [TECH-001..003]" {
+    class: milestone_done
+  }
+
+  m1_2: "Milestone 1.2\nConcurrency, SAST & Docs Verification\n[FUNC-005] [TECH-004..005]" {
+    class: milestone_done
+  }
+
+  m1_1 -> m1_2: "Unblocks verification gates"
+}
+
+phase2: "Phase 2: Enhancement v0.2.0 (Planned)" {
+  class: phase_planned
+
+  m2_1: "Milestone 2.1\nFIPS 204 Context-String Parameter Support\n[FUNC-006] [TECH-005..006]" {
+    class: milestone_planned
+  }
+
+  m2_2: "Milestone 2.2\nDeterministic Seed Keygen & NIST ACVP KATs\n[FUNC-006..007] [TECH-005] [TECH-007]" {
+    class: milestone_planned
+  }
+
+  m2_1 -> m2_2: "Shares OSSL_PARAM builder"
+}
+
+phase1.m1_2 -> phase2.m2_1: "Baseline v0.1.0 verified"

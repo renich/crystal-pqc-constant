@@ -1,0 +1,122 @@
+direction: down
+
+vars: {
+  d2-config: {
+    layout-engine: dagre
+    theme-id: 4
+    pad: 40
+    center: true
+  }
+}
+
+classes: {
+  tier: {
+    style: {
+      stroke: "#2B6CB0"
+      stroke-width: 2
+      border-radius: 8
+      fill: "#F7FAFC"
+    }
+  }
+  module_node: {
+    shape: rectangle
+    style: {
+      stroke: "#3182CE"
+      stroke-width: 2
+      border-radius: 6
+      fill: "#EBF8FF"
+      font: mono
+    }
+  }
+  guarded_node: {
+    shape: cylinder
+    style: {
+      stroke: "#2F855A"
+      stroke-width: 2
+      fill: "#F0FFF4"
+      font: mono
+    }
+  }
+  c_ffi_node: {
+    shape: hexagon
+    style: {
+      stroke: "#C05621"
+      stroke-width: 2
+      fill: "#FFFAF0"
+      font: mono
+    }
+  }
+  phase2_node: {
+    shape: rectangle
+    style: {
+      stroke: "#6B46C1"
+      stroke-width: 2
+      stroke-dash: 4
+      border-radius: 6
+      fill: "#FAF5FF"
+      font: mono
+    }
+  }
+}
+
+public_api: "Public Cryptographic API Tier (Crystal::Pqc::Constant)" {
+  class: tier
+
+  ml_kem: "MLKEMKeyPair & KEMVariant\nNIST FIPS 203 (ML-KEM-512/768/1024)\n#generate | .from_raw_keys | #encapsulate | #decapsulate" {
+    class: module_node
+  }
+
+  shared_secret: "SharedSecret (32 Bytes)\n#consume { |slice| ... }\nSingle-Use Guarded Secret" {
+    class: guarded_node
+  }
+
+  ml_dsa: "MLDSAKeyPair & DSAVariant\nNIST FIPS 204 (ML-DSA-44/65/87)\n#generate | .from_raw_keys | #sign | #verify" {
+    class: module_node
+  }
+
+  phase2_ext: "Phase 2 v0.2.0 Extensions\nFIPS 204 Context String (0..255B)\nDeterministic Seed Keygen & ACVP KATs" {
+    class: phase2_node
+  }
+
+  ml_kem -> shared_secret: "Returns & zeroes in ensure"
+  phase2_ext -> ml_kem: "Seed (d, z) [TECH-007]" {
+    style.stroke-dash: 3
+  }
+  phase2_ext -> ml_dsa: "Context & Seed xi [TECH-006/007]" {
+    style.stroke-dash: 3
+  }
+}
+
+bridge_tier: "Internal Orchestration & Guarded Memory Tier" {
+  class: tier
+
+  evp_helper: "EvpKeyHelper\n.generate_raw_keypair\n.validate_raw_keypair\nEphemeral EVP_PKEY Lifecycle" {
+    class: module_node
+  }
+
+  secure_buffer: "SecureBuffer & Sodium\nsodium_malloc + sodium_mprotect_readonly\nsodium_memzero + Sync::Mutex" {
+    class: guarded_node
+  }
+}
+
+native_tier: "Native System C ABI Providers (Zero External Shards)" {
+  class: tier
+
+  libcrypto: "LibCryptoPQC (OpenSSL 3.5+ libcrypto)\nEVP_PKEY_encapsulate/EVP_PKEY_decapsulate\nEVP_DigestSign/EVP_DigestVerify\nOSSL_SIGNATURE_PARAM_CONTEXT_STRING" {
+    class: c_ffi_node
+  }
+
+  libsodium: "LibSodium (libsodium)\nsodium_malloc/sodium_free\nsodium_mprotect_readonly/readwrite\nsodium_memzero/sodium_memcmp" {
+    class: c_ffi_node
+  }
+}
+
+public_api.ml_kem -> bridge_tier.evp_helper: "Keygen, validation & KEM ops"
+public_api.ml_dsa -> bridge_tier.evp_helper: "Keygen, validation & DSA ops"
+public_api.ml_kem -> bridge_tier.secure_buffer: "Pins @secret_buffer"
+public_api.ml_dsa -> bridge_tier.secure_buffer: "Pins @secret_buffer"
+public_api.shared_secret -> bridge_tier.secure_buffer: "Wraps 32B guarded page"
+
+bridge_tier.evp_helper -> native_tier.libcrypto: "EVP_PKEY & EVP_MD_CTX FFI"
+bridge_tier.evp_helper -> bridge_tier.secure_buffer: "Sodium.memzero & constant_time_equal?"
+bridge_tier.secure_buffer -> native_tier.libsodium: "Guarded VMA pages & canary protection"
