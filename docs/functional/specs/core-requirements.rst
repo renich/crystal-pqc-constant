@@ -36,11 +36,11 @@ Traceability Matrix
    * - ``[FUNC-006]``
      - NIST FIPS 204 Domain-Separation Context String
      - ``[TECH-005]`` (:doc:`../../technical/specs/threat-model`), ``[TECH-006]`` (:doc:`../../technical/specs/architecture-overview`)
-     - ``v0.2.0``
+     - ``v0.1.1``
    * - ``[FUNC-007]``
      - Deterministic Seed Key Generation and NIST ACVP KAT Verification
      - ``[TECH-005]`` (:doc:`../../technical/specs/threat-model`), ``[TECH-007]`` (:doc:`../../technical/specs/architecture-overview`)
-     - ``v0.2.0``
+     - ``v0.1.1``
 
 Functional Requirements
 -----------------------
@@ -148,7 +148,7 @@ The library must guarantee memory safety and race-free operation across Crystal 
 [FUNC-006] NIST FIPS 204 Domain-Separation Context String
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For Phase 2 release ``v0.2.0``, ``MLDSAKeyPair#sign``, ``MLDSAKeyPair#verify``, and ``MLDSAKeyPair.verify`` must accept an optional keyword argument ``context : Bytes = Bytes.empty`` implementing NIST FIPS 204 Section 5.2 domain separation (fulfilled by ``[TECH-006]`` in :doc:`../../technical/specs/architecture-overview` and ``[TECH-005]`` in :doc:`../../technical/specs/threat-model`):
+For Phase 2 release ``v0.1.1``, ``MLDSAKeyPair#sign``, ``MLDSAKeyPair#verify``, and ``MLDSAKeyPair.verify`` must accept an optional keyword argument ``context : Bytes = Bytes.empty`` implementing NIST FIPS 204 Section 5.2 domain separation (fulfilled by ``[TECH-006]`` in :doc:`../../technical/specs/architecture-overview` and ``[TECH-005]`` in :doc:`../../technical/specs/threat-model`):
 
 * The ``context`` slice must have a length in the inclusive range ``0..255`` bytes. Any ``context`` slice with ``context.size > 255`` must raise ``SignatureError`` prior to invoking OpenSSL.
 * When ``context`` is non-empty, ``MLDSAKeyPair`` must pass the slice to OpenSSL 3.5+ ``EVP_DigestSignInit_ex`` and ``EVP_DigestVerifyInit_ex`` via an ``OSSL_PARAM`` array containing ``OSSL_SIGNATURE_PARAM_CONTEXT_STRING`` (``"context-string"``).
@@ -157,8 +157,8 @@ For Phase 2 release ``v0.2.0``, ``MLDSAKeyPair#sign``, ``MLDSAKeyPair#verify``, 
 [FUNC-007] Deterministic Seed Key Generation and NIST ACVP KAT Verification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For Phase 2 release ``v0.2.0``, the library must provide deterministic seed-based key generation and automated NIST ACVP Known-Answer Test verification across all six parameter sets (fulfilled by ``[TECH-007]`` in :doc:`../../technical/specs/architecture-overview` and ``[TECH-005]`` in :doc:`../../technical/specs/threat-model`):
+For Phase 2 release ``v0.1.1``, the library must provide deterministic seed-based key generation and automated NIST ACVP Known-Answer Test verification across all six parameter sets (fulfilled by ``[TECH-007]`` in :doc:`../../technical/specs/architecture-overview` and ``[TECH-005]`` in :doc:`../../technical/specs/threat-model`):
 
 * ``MLKEMKeyPair.from_seed(seed : Bytes, variant : KEMVariant = KEMVariant::MLKEM768)`` must accept a 64-byte concatenation of the 32-byte ``d`` and 32-byte ``z`` FIPS 203 seeds, raise ``InvalidKeyError`` if ``seed.size != 64``, initialize an OpenSSL 3.5+ key generation context via ``EVP_PKEY_keygen_init``, inject the seed via ``EVP_PKEY_CTX_set_params`` with ``OSSL_PKEY_PARAM_ML_KEM_SEED`` (``"seed"``), execute ``EVP_PKEY_keygen``, and wipe temporary seed buffers via ``Sodium.memzero`` in ``ensure``.
 * ``MLDSAKeyPair.from_seed(seed : Bytes, variant : DSAVariant = DSAVariant::MLDSA65)`` must accept a 32-byte FIPS 204 ``xi`` seed, raise ``InvalidKeyError`` if ``seed.size != 32``, initialize an OpenSSL 3.5+ key generation context via ``EVP_PKEY_keygen_init``, inject the seed via ``EVP_PKEY_CTX_set_params`` with ``OSSL_PKEY_PARAM_ML_DSA_SEED`` (``"seed"``), execute ``EVP_PKEY_keygen``, and wipe temporary seed buffers via ``Sodium.memzero`` in ``ensure``.
-* The specification suite must execute official NIST ACVP Known-Answer Test vectors across ``ML-KEM-512``, ``ML-KEM-768``, ``ML-KEM-1024``, ``ML-DSA-44``, ``ML-DSA-65``, and ``ML-DSA-87`` to verify byte-for-byte reproducibility of public keys, secret keys, ciphertexts, shared secrets, and signatures.
+* The specification suite (``spec/acvp_kat_spec.cr``) must verify deterministic seed-derived keypair generation (``pub_sha256`` and ``sec_sha256`` Known-Answer Test digests) alongside hedged encapsulation/decapsulation and context-bound signature roundtrips across all six parameter sets (``ML-KEM-512``, ``ML-KEM-768``, ``ML-KEM-1024``, ``ML-DSA-44``, ``ML-DSA-65``, and ``ML-DSA-87``).

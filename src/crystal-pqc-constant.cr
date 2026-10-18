@@ -2,6 +2,7 @@ require "./crystal-pqc-constant/version"
 require "./crystal-pqc-constant/errors"
 require "./crystal-pqc-constant/sodium"
 require "./crystal-pqc-constant/lib_crypto_pqc"
+require "./crystal-pqc-constant/evp_key_helper"
 require "./crystal-pqc-constant/ml_kem"
 require "./crystal-pqc-constant/ml_dsa"
 

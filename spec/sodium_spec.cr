@@ -1,8 +1,9 @@
 require "./spec_helper"
 
+# Verifies [FUNC-003], [FUNC-004], [FUNC-005] / [TECH-001]
 describe Crystal::Pqc::Constant do
-  it "defines VERSION 0.1.0" do
-    Crystal::Pqc::Constant::VERSION.should eq("0.1.0")
+  it "defines VERSION 0.1.1" do
+    Crystal::Pqc::Constant::VERSION.should eq("0.1.1")
   end
 
   describe Crystal::Pqc::Constant::Sodium do
@@ -75,6 +76,19 @@ describe Crystal::Pqc::Constant do
       expect_raises(Crystal::Pqc::Constant::InvalidKeyError) do
         Crystal::Pqc::Constant::SharedSecret.new(Bytes.new(16, 1_u8))
       end
+    end
+  end
+
+  # Verifies [FUNC-006] / [TECH-006] and [FUNC-007] / [TECH-007]
+  describe Crystal::Pqc::Constant::EvpKeyHelper do
+    it "constructs a null-terminated 2-element OsslParamData array for octet strings" do
+      payload = Bytes[0x10, 0x20, 0x30]
+      params = Crystal::Pqc::Constant::EvpKeyHelper.build_octet_param_array("context-string", payload)
+      params.size.should eq(2)
+      params[0].data_type.should eq(Crystal::Pqc::Constant::LibCryptoPQC::OSSL_PARAM_OCTET_STRING)
+      params[0].data_size.should eq(LibC::SizeT.new(3))
+      params[1].key.null?.should be_true
+      params[1].data_type.should eq(0_u32)
     end
   end
 end

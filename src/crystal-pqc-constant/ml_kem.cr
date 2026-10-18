@@ -40,9 +40,7 @@ module Crystal::Pqc::Constant
 
     # Initializes a `SharedSecret` by copying 32 bytes into guarded memory.
     def initialize(secret_bytes : Bytes) : Nil
-      if secret_bytes.size != BYTE_SIZE
-        raise InvalidKeyError.new("SharedSecret must be #{BYTE_SIZE} bytes, got #{secret_bytes.size}")
-      end
+      raise InvalidKeyError.new("Invalid SharedSecret size: #{secret_bytes.size}") if secret_bytes.size != BYTE_SIZE
       @buffer = SecureBuffer.new(secret_bytes)
     end
 
@@ -71,6 +69,9 @@ module Crystal::Pqc::Constant
 
   # NIST FIPS 203 (`ML-KEM`) key pair with guarded secret key storage in `libsodium` memory.
   class MLKEMKeyPair
+    # Canonical byte length of a FIPS 203 `(d, z)` deterministic seed.
+    SEED_SIZE = 64
+
     # The `KEMVariant` parameter set for this key pair.
     getter variant : KEMVariant
 
@@ -96,9 +97,15 @@ module Crystal::Pqc::Constant
     def self.generate(variant : KEMVariant = KEMVariant::MLKEM768) : self
       EvpKeyHelper.generate_raw_keypair(
         variant.algorithm_name, variant.public_key_size, variant.secret_key_size
-      ) do |pub, priv|
-        new(pub, priv, variant)
-      end
+      ) { |pub, priv| new(pub, priv, variant) }
+    end
+
+    # Deterministically derives an `MLKEMKeyPair` from a 64-byte `(d, z)` *seed*.
+    def self.from_seed(seed : Bytes, variant : KEMVariant = KEMVariant::MLKEM768) : self
+      raise InvalidKeyError.new("Invalid #{variant.algorithm_name} seed size: #{seed.size}") if seed.size != SEED_SIZE
+      EvpKeyHelper.generate_raw_keypair_from_seed(
+        variant.algorithm_name, seed, variant.public_key_size, variant.secret_key_size
+      ) { |pub, priv| new(pub, priv, variant) }
     end
 
     # Constructs an `MLKEMKeyPair` from raw public and secret key byte slices.
@@ -112,8 +119,7 @@ module Crystal::Pqc::Constant
 
     # Encapsulates a fresh 32-byte `SharedSecret` against *public_key*.
     def self.encapsulate(
-      public_key : Bytes,
-      variant : KEMVariant = KEMVariant::MLKEM768,
+      public_key : Bytes, variant : KEMVariant = KEMVariant::MLKEM768,
     ) : NamedTuple(ciphertext: Bytes, shared_secret: SharedSecret)
       Sodium.init
       if public_key.size != variant.public_key_size
@@ -159,13 +165,12 @@ module Crystal::Pqc::Constant
     end
 
     protected def self.perform_encapsulation(
-      pkey : LibCryptoPQC::EvpPkey,
-      variant : KEMVariant,
+      pkey : LibCryptoPQC::EvpPkey, v : KEMVariant,
     ) : NamedTuple(ciphertext: Bytes, shared_secret: SharedSecret)
       ctx = LibCryptoPQC.EVP_PKEY_CTX_new_from_pkey(nil, pkey, nil)
       raise EncapsulationError.new("EVP_PKEY_CTX_new_from_pkey failed") if ctx.null?
-      ct = Bytes.new(variant.ciphertext_size)
-      ss = Bytes.new(variant.shared_secret_size)
+      ct = Bytes.new(v.ciphertext_size)
+      ss = Bytes.new(v.shared_secret_size)
       begin
         run_encapsulate_ctx(ctx, ct, ss)
         {ciphertext: ct, shared_secret: SharedSecret.new(ss)}
@@ -182,8 +187,8 @@ module Crystal::Pqc::Constant
       ct_len = LibC::SizeT.new(ct.size)
       ss_len = LibC::SizeT.new(ss.size)
       rc = LibCryptoPQC.EVP_PKEY_encapsulate(ctx, ct.to_unsafe, pointerof(ct_len), ss.to_unsafe, pointerof(ss_len))
-      invalid = rc <= 0 || ct_len.to_i32 != ct.size || ss_len.to_i32 != ss.size
-      raise EncapsulationError.new("EVP_PKEY_encapsulate failed") if invalid
+      return unless rc <= 0 || ct_len.to_i32 != ct.size || ss_len.to_i32 != ss.size
+      raise EncapsulationError.new("EVP_PKEY_encapsulate failed")
     end
 
     protected def self.perform_decapsulation(pkey : LibCryptoPQC::EvpPkey, ct : Bytes, v : KEMVariant) : SharedSecret

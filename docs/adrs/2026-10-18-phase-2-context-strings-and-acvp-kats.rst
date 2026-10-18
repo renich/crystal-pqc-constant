@@ -9,7 +9,7 @@ ADR-002: Phase 2 FIPS 204 Context Strings and NIST ACVP Seed Vectors
 Context
 -------
 
-Phase 1 (``v0.1.0``) delivered NIST FIPS 203 ``ML-KEM`` and NIST FIPS 204 ``ML-DSA`` key generation, raw key serialization, encapsulation, decapsulation, detached signing, and verification backed by OpenSSL 3.5+ and ``libsodium`` guarded memory (``[FUNC-001]`` through ``[FUNC-005]``). To reach a complete cryptographic compliance posture in Phase 2 (``v0.2.0``), downstream FIDO2, WebAuthn, and PKI protocols require two additional capabilities mandated by NIST standards:
+Phase 1 (``v0.1.0``) delivered NIST FIPS 203 ``ML-KEM`` and NIST FIPS 204 ``ML-DSA`` key generation, raw key serialization, encapsulation, decapsulation, detached signing, and verification backed by OpenSSL 3.5+ and ``libsodium`` guarded memory (``[FUNC-001]`` through ``[FUNC-005]``). To reach a complete cryptographic compliance posture in Phase 2 (``v0.1.1``), downstream FIDO2, WebAuthn, and PKI protocols require two additional capabilities mandated by NIST standards:
 
 #. **NIST FIPS 204 Section 5.2 Domain-Separation Context Strings**: Pure ``ML-DSA`` signatures accept a protocol-specific ``context`` byte string of ``0..255`` bytes (defaulting to the empty string) to prevent cross-protocol signature replay between distinct application domains sharing a key pair.
 #. **Deterministic Seed Expansion and NIST ACVP Known-Answer Tests**: FIPS 203 defines deterministic key generation from a 64-byte ``(d, z)`` seed and FIPS 204 defines deterministic key generation from a 32-byte ``xi`` seed. Supporting seed-based key generation enables automated verification against official NIST Automated Cryptographic Validation Protocol (ACVP) test vectors.

@@ -20,7 +20,7 @@ Add ``crystal-pqc-constant`` to your ``shard.yml``:
    dependencies:
      crystal-pqc-constant:
        gitlab: renich/crystal-pqc-constant
-       version: ~> 0.1.0
+       version: ~> 0.1.1
 
 ML-KEM Key Encapsulation Example
 --------------------------------
@@ -58,9 +58,30 @@ ML-DSA Digital Signature Example
    )
    begin
      message = "Authenticated post-quantum payload".to_slice
-     signature = signer.sign(message)
-     valid = signer.verify(message, signature)
+     context = "evalinux-fido2-v1".to_slice
+     signature = signer.sign(message, context: context)
+     valid = signer.verify(message, signature, context: context)
      puts "ML-DSA-65 signature valid: #{valid}"
    ensure
      signer.dispose
+   end
+
+Deterministic Seed Key Generation
+---------------------------------
+
+.. code-block:: crystal
+
+   require "crystal-pqc-constant"
+
+   kem_seed = Bytes.new(64) { |i| i.to_u8 }
+   dsa_seed = Bytes.new(32) { |i| i.to_u8 }
+
+   kem_pair = Crystal::Pqc::Constant::MLKEMKeyPair.from_seed(kem_seed)
+   dsa_pair = Crystal::Pqc::Constant::MLDSAKeyPair.from_seed(dsa_seed)
+   begin
+     puts "Deterministic ML-KEM-768 public key bytes: #{kem_pair.public_key.size}"
+     puts "Deterministic ML-DSA-65 public key bytes: #{dsa_pair.public_key.size}"
+   ensure
+     kem_pair.dispose
+     dsa_pair.dispose
    end

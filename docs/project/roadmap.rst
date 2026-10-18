@@ -27,8 +27,8 @@ Phase Summary Matrix
      - Completed
      - Core ``libsodium`` guarded memory, OpenSSL 3.5+ ``EVP_PKEY`` FFI bridge, NIST FIPS 203 ``ML-KEM``, NIST FIPS 204 ``ML-DSA``, 39 specs, zero-warning SAST, and Sphinx documentation (``[FUNC-001]``..``[FUNC-005]``, ``[TECH-001]``..``[TECH-005]``).
    * - :doc:`roadmaps/phase-2-enhancement`
-     - ``v0.2.0``
-     - Planned
+     - ``v0.1.1``
+     - Completed
      - NIST FIPS 204 Section 5.2 domain-separation ``context`` strings (``0..255`` bytes), deterministic seed key generation (``d||z`` and ``xi``), and NIST ACVP Known-Answer Test verification across all six parameter sets (``[FUNC-006]``, ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-006]``, ``[TECH-007]``).
 
 .. toctree::

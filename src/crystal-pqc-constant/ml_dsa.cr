@@ -30,6 +30,12 @@ module Crystal::Pqc::Constant
   # NIST FIPS 204 (`ML-DSA`) key pair managing a public verification key and
   # a guarded signing secret key in `libsodium` secure memory.
   class MLDSAKeyPair
+    # Canonical byte length of a FIPS 204 `xi` deterministic seed.
+    SEED_SIZE = 32
+
+    # Maximum byte length of a FIPS 204 domain-separation context string.
+    MAX_CONTEXT_SIZE = 255
+
     # The `DSAVariant` parameter set for this key pair.
     getter variant : DSAVariant
 
@@ -61,6 +67,16 @@ module Crystal::Pqc::Constant
       end
     end
 
+    # Deterministically derives an `MLDSAKeyPair` from a 32-byte `xi` *seed*.
+    def self.from_seed(seed : Bytes, variant : DSAVariant = DSAVariant::MLDSA65) : self
+      if seed.size != SEED_SIZE
+        raise InvalidKeyError.new("Invalid #{variant.algorithm_name} seed size: #{seed.size}")
+      end
+      EvpKeyHelper.generate_raw_keypair_from_seed(
+        variant.algorithm_name, seed, variant.public_key_size, variant.secret_key_size
+      ) { |pub, priv| new(pub, priv, variant) }
+    end
+
     # Constructs an `MLDSAKeyPair` from raw public and secret key byte slices.
     def self.from_raw_keys(
       public_key : Bytes,
@@ -74,36 +90,39 @@ module Crystal::Pqc::Constant
       new(public_key.dup, secret_key, variant)
     end
 
-    # Signs *message* using the guarded secret key and returns the detached
-    # ML-DSA signature slice.
-    def sign(message : Bytes) : Bytes
+    # Signs *message* with an optional FIPS 204 domain-separation *context*
+    # (`0..255` bytes) using the guarded secret key and returns the detached signature.
+    def sign(message : Bytes, context : Bytes = Bytes.empty) : Bytes
+      self.class.validate_context!(context)
       @secret_buffer.with_slice do |secret_slice|
         pkey = EvpKeyHelper.load_private_key(@variant.algorithm_name, secret_slice)
         begin
-          self.class.perform_sign(pkey, message, @variant)
+          self.class.perform_sign(pkey, message, @variant, context)
         ensure
           LibCryptoPQC.EVP_PKEY_free(pkey)
         end
       end
     end
 
-    # Verifies *signature* against *message* using this key pair's public key.
-    def verify(message : Bytes, signature : Bytes) : Bool
+    # Verifies *signature* against *message* and optional *context* (`0..255` bytes)
+    # using this key pair's public key.
+    def verify(message : Bytes, signature : Bytes, context : Bytes = Bytes.empty) : Bool
       raise DisposedError.new("MLDSAKeyPair has already been disposed") if disposed?
 
-      self.class.verify(@public_key, message, signature, @variant)
+      self.class.verify(@public_key, message, signature, @variant, context: context)
     end
 
-    # Verifies *signature* against *message* using a raw *public_key* slice.
-    # Raises `InvalidKeyError` if *public_key* has an invalid size or encoding,
-    # and returns `false` if *signature* has the wrong size or fails verification.
+    # Verifies *signature* against *message* and optional *context* (`0..255` bytes)
+    # using a raw *public_key* slice.
     def self.verify(
       public_key : Bytes,
       message : Bytes,
       signature : Bytes,
       variant : DSAVariant = DSAVariant::MLDSA65,
+      context : Bytes = Bytes.empty,
     ) : Bool
       Sodium.init
+      validate_context!(context)
       if public_key.size != variant.public_key_size
         raise InvalidKeyError.new("Invalid #{variant.algorithm_name} public key size: #{public_key.size}")
       end
@@ -111,7 +130,7 @@ module Crystal::Pqc::Constant
 
       pkey = EvpKeyHelper.load_public_key(variant.algorithm_name, public_key)
       begin
-        perform_verify(pkey, message, signature)
+        perform_verify(pkey, message, signature, context)
       ensure
         LibCryptoPQC.EVP_PKEY_free(pkey)
       end
@@ -127,17 +146,24 @@ module Crystal::Pqc::Constant
       @secret_buffer.disposed?
     end
 
+    protected def self.validate_context!(context : Bytes) : Nil
+      return unless context.size > MAX_CONTEXT_SIZE
+
+      raise SignatureError.new("Invalid ML-DSA context size: #{context.size} (max #{MAX_CONTEXT_SIZE})")
+    end
+
     protected def self.perform_sign(
       pkey : LibCryptoPQC::EvpPkey,
       message : Bytes,
       variant : DSAVariant,
+      context : Bytes,
     ) : Bytes
       md_ctx = LibCrypto.evp_md_ctx_new
       raise SignatureError.new("EVP_MD_CTX_new failed") if md_ctx.null?
 
       sig = Bytes.new(variant.signature_size)
       begin
-        run_digest_sign(md_ctx, pkey, sig, message)
+        run_digest_sign(md_ctx, pkey, sig, message, context)
         sig
       ensure
         LibCrypto.evp_md_ctx_free(md_ctx)
@@ -149,8 +175,11 @@ module Crystal::Pqc::Constant
       pkey : LibCryptoPQC::EvpPkey,
       sig : Bytes,
       message : Bytes,
+      context : Bytes,
     ) : Nil
-      if LibCryptoPQC.EVP_DigestSignInit_ex(md_ctx, nil, nil, nil, nil, pkey, nil) <= 0
+      params = EvpKeyHelper.build_octet_param_array("context-string", context)
+      param_ptr = context.empty? ? Pointer(LibCryptoPQC::OsslParamData).null : params.to_unsafe
+      if LibCryptoPQC.EVP_DigestSignInit_ex(md_ctx, nil, nil, nil, nil, pkey, param_ptr) <= 0
         raise SignatureError.new("EVP_DigestSignInit_ex failed")
       end
       sig_len = LibC::SizeT.new(sig.size)
@@ -162,12 +191,15 @@ module Crystal::Pqc::Constant
       pkey : LibCryptoPQC::EvpPkey,
       message : Bytes,
       signature : Bytes,
+      context : Bytes,
     ) : Bool
       md_ctx = LibCrypto.evp_md_ctx_new
       raise SignatureError.new("EVP_MD_CTX_new failed") if md_ctx.null?
 
       begin
-        if LibCryptoPQC.EVP_DigestVerifyInit_ex(md_ctx, nil, nil, nil, nil, pkey, nil) <= 0
+        params = EvpKeyHelper.build_octet_param_array("context-string", context)
+        param_ptr = context.empty? ? Pointer(LibCryptoPQC::OsslParamData).null : params.to_unsafe
+        if LibCryptoPQC.EVP_DigestVerifyInit_ex(md_ctx, nil, nil, nil, nil, pkey, param_ptr) <= 0
           raise SignatureError.new("EVP_DigestVerifyInit_ex failed")
         end
         LibCryptoPQC.EVP_DigestVerify(md_ctx, signature.to_unsafe, signature.size, message.to_unsafe, message.size) == 1

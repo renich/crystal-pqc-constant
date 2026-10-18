@@ -1,5 +1,6 @@
 require "./spec_helper"
 
+# Verifies [FUNC-001], [FUNC-003], [FUNC-004], [FUNC-005], [FUNC-007] / [TECH-002], [TECH-003], [TECH-005], [TECH-007]
 describe Crystal::Pqc::Constant::MLKEMKeyPair do
   describe "KEMVariant metadata" do
     it "reports FIPS 203 byte sizes and algorithm names" do
@@ -130,6 +131,34 @@ describe Crystal::Pqc::Constant::MLKEMKeyPair do
         expect_raises(Crystal::Pqc::Constant::DisposedError) { kp.secret_key }
         expect_raises(Crystal::Pqc::Constant::DisposedError) { kp.encapsulate }
         expect_raises(Crystal::Pqc::Constant::DisposedError) { kp.decapsulate(enc[:ciphertext]) }
+      end
+
+      # Verifies [FUNC-007] / [TECH-005], [TECH-007]
+      it "derives deterministic keypairs from a 64-byte (d, z) seed and rejects invalid seed lengths" do
+        seed = Bytes.new(64) { |idx| (idx &* 7 &+ 3).to_u8! }
+        kp1 = Crystal::Pqc::Constant::MLKEMKeyPair.from_seed(seed, variant)
+        kp2 = Crystal::Pqc::Constant::MLKEMKeyPair.from_seed(seed, variant)
+        begin
+          kp1.public_key.should eq(kp2.public_key)
+          sec1 = kp1.secret_key
+          sec2 = kp2.secret_key
+          begin
+            sec1.should eq(sec2)
+          ensure
+            Crystal::Pqc::Constant::Sodium.memzero(sec1)
+            Crystal::Pqc::Constant::Sodium.memzero(sec2)
+          end
+
+          expect_raises(Crystal::Pqc::Constant::InvalidKeyError) do
+            Crystal::Pqc::Constant::MLKEMKeyPair.from_seed(Bytes.new(63), variant)
+          end
+          expect_raises(Crystal::Pqc::Constant::InvalidKeyError) do
+            Crystal::Pqc::Constant::MLKEMKeyPair.from_seed(Bytes.new(65), variant)
+          end
+        ensure
+          kp1.dispose
+          kp2.dispose
+        end
       end
     end
   end

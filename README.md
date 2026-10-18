@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <a href="https://gitlab.com/renich/crystal-pqc-constant/-/releases"><img src="https://img.shields.io/badge/version-v0.1.0-blue.svg?style=flat-square" alt="Version 0.1.0" /></a>
+  <a href="https://gitlab.com/renich/crystal-pqc-constant/-/releases"><img src="https://img.shields.io/badge/version-v0.1.1-blue.svg?style=flat-square" alt="Version 0.1.1" /></a>
   <a href="https://crystal-lang.org/"><img src="https://img.shields.io/badge/crystal-%3E%3D%201.21.0-black.svg?style=flat-square&logo=crystal&logoColor=white" alt="Crystal >= 1.21.0" /></a>
   <a href="https://gitlab.com/renich/crystal-pqc-constant/-/pipelines"><img src="https://img.shields.io/badge/pipeline-passing-brightgreen.svg?style=flat-square&logo=gitlab" alt="GitLab CI Passing" /></a>
-  <a href="https://gitlab.com/renich/crystal-pqc-constant"><img src="https://img.shields.io/badge/specs-39%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
+  <a href="https://gitlab.com/renich/crystal-pqc-constant"><img src="https://img.shields.io/badge/specs-55%20passing-success.svg?style=flat-square&logo=crystal" alt="Specs Passing" /></a>
   <a href="https://github.com/crystal-ameba/ameba"><img src="https://img.shields.io/badge/ameba-0%20violations-brightgreen.svg?style=flat-square" alt="Ameba Clean" /></a>
   <a href="https://github.com/kdairatchi/flaw"><img src="https://img.shields.io/badge/flaw-0%20findings-brightgreen.svg?style=flat-square" alt="Flaw Clean" /></a>
 </p>
@@ -35,8 +35,8 @@
 ### Key Highlights
 
 1. **Zero Runtime Shard Dependencies**: Links directly against system `libcrypto` (OpenSSL 3.5+) and `libsodium` with zero external Crystal shards.
-2. **NIST FIPS 203 (`ML-KEM`) Key Encapsulation**: Supports `ML-KEM-512` (Category 1), `ML-KEM-768` (Category 3, default), and `ML-KEM-1024` (Category 5) with implicit-rejection decapsulation and single-use `SharedSecret#consume`.
-3. **NIST FIPS 204 (`ML-DSA`) Digital Signatures**: Supports `ML-DSA-44` (Category 2), `ML-DSA-65` (Category 3, default), and `ML-DSA-87` (Category 5) detached signing and verification.
+2. **NIST FIPS 203 (`ML-KEM`) Key Encapsulation**: Supports `ML-KEM-512` (Category 1), `ML-KEM-768` (Category 3, default), and `ML-KEM-1024` (Category 5) with deterministic 64-byte `(d, z)` seed keygen (`MLKEMKeyPair.from_seed`), implicit-rejection decapsulation, and single-use `SharedSecret#consume`.
+3. **NIST FIPS 204 (`ML-DSA`) Digital Signatures**: Supports `ML-DSA-44` (Category 2), `ML-DSA-65` (Category 3, default), and `ML-DSA-87` (Category 5) detached signing and verification with deterministic 32-byte `xi` seed keygen (`MLDSAKeyPair.from_seed`) and FIPS 204 Section 5.2 domain-separation `context` strings (`0..255` bytes).
 4. **Guarded Memory Isolation**: Secret keys and shared secrets are allocated in `sodium_malloc` canary-guarded pages, locked `PROT_READ` at rest via `sodium_mprotect_readonly`, synchronized with `Sync::Mutex`, and deterministically wiped via `sodium_memzero` prior to release.
 5. **Multi-Tier Documentation Suite**: Complete Sphinx technical, functional (`[FUNC-001]`–`[FUNC-007]`), business, ADR, D2 visual diagrams, and compiler-generated API reference documentation.
 
@@ -72,7 +72,7 @@ Ensure OpenSSL 3.5+ (`openssl-devel`/`openssl-dev`) and `libsodium` (`libsodium-
 dependencies:
   crystal-pqc-constant:
     gitlab: renich/crystal-pqc-constant
-    version: ~> 0.1.0
+    version: ~> 0.1.1
 ```
 
 Then install the shard:
@@ -108,7 +108,7 @@ ensure
 end
 ```
 
-### ML-DSA Digital Signatures
+### ML-DSA Digital Signatures with FIPS 204 Context Separation
 
 ```crystal
 require "crystal-pqc-constant"
@@ -118,8 +118,9 @@ signer = Crystal::Pqc::Constant::MLDSAKeyPair.generate(
 )
 begin
   message = "FIDO2 post-quantum assertion".to_slice
-  signature = signer.sign(message)
-  puts "Verified: #{signer.verify(message, signature)}"
+  context = "evalinux-fido2-v1".to_slice
+  signature = signer.sign(message, context: context)
+  puts "Verified: #{signer.verify(message, signature, context: context)}"
 ensure
   signer.dispose
 end

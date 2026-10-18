@@ -4,7 +4,7 @@
 project = 'crystal-pqc-constant'
 copyright = '2026, Rénich Bon Ćirić (Copyleft)'
 author = 'Rénich Bon Ćirić'
-release = '0.1.0'
+release = '0.1.1'
 
 extensions = [
     'sphinx.ext.autodoc',

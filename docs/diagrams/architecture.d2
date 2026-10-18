@@ -51,7 +51,6 @@ classes: {
     style: {
       stroke: "#6B46C1"
       stroke-width: 2
-      stroke-dash: 4
       border-radius: 6
       fill: "#FAF5FF"
       font: mono
@@ -62,7 +61,7 @@ classes: {
 public_api: "Public Cryptographic API Tier (Crystal::Pqc::Constant)" {
   class: tier
 
-  ml_kem: "MLKEMKeyPair & KEMVariant\nNIST FIPS 203 (ML-KEM-512/768/1024)\n#generate | .from_raw_keys | #encapsulate | #decapsulate" {
+  ml_kem: "MLKEMKeyPair & KEMVariant\nNIST FIPS 203 (ML-KEM-512/768/1024)\n.generate | .from_seed | .from_raw_keys | #encapsulate | #decapsulate" {
     class: module_node
   }
 
@@ -70,27 +69,23 @@ public_api: "Public Cryptographic API Tier (Crystal::Pqc::Constant)" {
     class: guarded_node
   }
 
-  ml_dsa: "MLDSAKeyPair & DSAVariant\nNIST FIPS 204 (ML-DSA-44/65/87)\n#generate | .from_raw_keys | #sign | #verify" {
+  ml_dsa: "MLDSAKeyPair & DSAVariant\nNIST FIPS 204 (ML-DSA-44/65/87)\n.generate | .from_seed | .from_raw_keys | #sign | #verify" {
     class: module_node
   }
 
-  phase2_ext: "Phase 2 v0.2.0 Extensions\nFIPS 204 Context String (0..255B)\nDeterministic Seed Keygen & ACVP KATs" {
+  phase2_ext: "Phase 2 v0.1.1 Capabilities\nFIPS 204 Context String (0..255B)\nDeterministic Seed Keygen & ACVP KATs" {
     class: phase2_node
   }
 
   ml_kem -> shared_secret: "Returns & zeroes in ensure"
-  phase2_ext -> ml_kem: "Seed (d, z) [TECH-007]" {
-    style.stroke-dash: 3
-  }
-  phase2_ext -> ml_dsa: "Context & Seed xi [TECH-006/007]" {
-    style.stroke-dash: 3
-  }
+  phase2_ext -> ml_kem: "Seed (d, z) [TECH-007]"
+  phase2_ext -> ml_dsa: "Context & Seed xi [TECH-006/007]"
 }
 
 bridge_tier: "Internal Orchestration & Guarded Memory Tier" {
   class: tier
 
-  evp_helper: "EvpKeyHelper\n.generate_raw_keypair\n.validate_raw_keypair\nEphemeral EVP_PKEY Lifecycle" {
+  evp_helper: "EvpKeyHelper (evp_key_helper.cr)\n.generate_raw_keypair | .generate_raw_keypair_from_seed\n.validate_raw_keypair | .build_octet_param_array" {
     class: module_node
   }
 

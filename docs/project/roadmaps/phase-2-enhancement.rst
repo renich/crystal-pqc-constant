@@ -5,8 +5,8 @@ Phase 2: Enhancement
 Timeline and Objectives
 -----------------------
 
-* **Target Release**: ``v0.2.0``
-* **Status**: Planned
+* **Target Release**: ``v0.1.1``
+* **Status**: Completed
 * **Objective**: Achieve NIST FIPS 203 and FIPS 204 specification completeness by adding FIPS 204 Section 5.2 domain-separation context strings (``0..255`` bytes), deterministic seed-based key generation (``d||z`` for ``ML-KEM`` and ``xi`` for ``ML-DSA``), and automated NIST ACVP Known-Answer Test verification across all six parameter sets (``[FUNC-006]``, ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-006]``, ``[TECH-007]``).
 
 Dependency Graph
@@ -24,15 +24,15 @@ Milestone 2.1: FIPS 204 Context-String Parameter Support
 
 * **TASK-201: OpenSSL 3.5+ OSSL_PARAM C ABI Marshaling**
 
-  * **Status**: Planned (``[ ]``)
+  * **Status**: Completed (``[x]``)
   * **Fulfills**: ``[FUNC-006]``, ``[FUNC-007]``, ``[TECH-006]``, ``[TECH-007]``
   * **Blocked By**: Phase 1 ``TASK-105``
   * **Unblocks**: ``TASK-202``, ``TASK-203``
-  * **Deliverables**: Define ``LibCryptoPQC::OsslParamData`` matching OpenSSL's ``struct ossl_param_st``, bind ``EVP_PKEY_CTX_set_params``, and implement helper constructors for octet-string parameter arrays in ``src/crystal-pqc-constant/lib_crypto_pqc.cr``.
+  * **Deliverables**: Define ``LibCryptoPQC::OsslParamData`` matching OpenSSL's ``struct ossl_param_st``, bind ``EVP_PKEY_CTX_set_params`` in ``src/crystal-pqc-constant/lib_crypto_pqc.cr``, and implement helper constructors for octet-string parameter arrays in ``src/crystal-pqc-constant/evp_key_helper.cr``.
 
 * **TASK-202: MLDSAKeyPair Context-String Signing and Verification**
 
-  * **Status**: Planned (``[ ]``)
+  * **Status**: Completed (``[x]``)
   * **Fulfills**: ``[FUNC-006]``, ``[TECH-005]``, ``[TECH-006]``
   * **Blocked By**: ``TASK-201``
   * **Unblocks**: ``TASK-204``
@@ -43,7 +43,7 @@ Milestone 2.2: Deterministic Seed Keygen and NIST ACVP KAT Verification
 
 * **TASK-203: Deterministic Seed Key Generation for ML-KEM and ML-DSA**
 
-  * **Status**: Planned (``[ ]``)
+  * **Status**: Completed (``[x]``)
   * **Fulfills**: ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-007]``
   * **Blocked By**: ``TASK-201``
   * **Unblocks**: ``TASK-204``
@@ -51,10 +51,10 @@ Milestone 2.2: Deterministic Seed Keygen and NIST ACVP KAT Verification
 
 * **TASK-204: Official NIST ACVP Known-Answer Test Verification Suite**
 
-  * **Status**: Planned (``[ ]``)
+  * **Status**: Completed (``[x]``)
   * **Fulfills**: ``[FUNC-006]``, ``[FUNC-007]``, ``[TECH-005]``, ``[TECH-007]``
   * **Blocked By**: ``TASK-202``, ``TASK-203``
-  * **Unblocks**: ``v0.2.0`` Release
+  * **Unblocks**: ``v0.1.1`` Release
   * **Deliverables**: Add ``spec/acvp_kat_spec.cr`` verifying official NIST ACVP deterministic key generation, encapsulation, decapsulation, and context-separated signature vectors across ``ML-KEM-512``, ``ML-KEM-768``, ``ML-KEM-1024``, ``ML-DSA-44``, ``ML-DSA-65``, and ``ML-DSA-87``.
 
 Critical Path

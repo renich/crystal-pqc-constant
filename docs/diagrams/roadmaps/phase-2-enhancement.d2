@@ -12,19 +12,19 @@ vars: {
 classes: {
   milestone_box: {
     style: {
-      stroke: "#2B6CB0"
+      stroke: "#2F855A"
       stroke-width: 2
       border-radius: 8
-      fill: "#F7FAFC"
+      fill: "#F0FFF4"
     }
   }
-  task_planned: {
+  task_done: {
     shape: rectangle
     style: {
-      stroke: "#3182CE"
+      stroke: "#276749"
       stroke-width: 2
       border-radius: 6
-      fill: "#EBF8FF"
+      fill: "#C6F6D5"
       font: mono
     }
   }
@@ -34,11 +34,11 @@ m2_1: "Milestone 2.1: FIPS 204 Context-String Parameter Support" {
   class: milestone_box
 
   task201: "TASK-201: OSSL_PARAM Marshaling\nLibCryptoPQC::OsslParamData & Builders\nFulfills: [FUNC-006], [FUNC-007], [TECH-006], [TECH-007]" {
-    class: task_planned
+    class: task_done
   }
 
   task202: "TASK-202: MLDSAKeyPair Context Signing\ncontext : Bytes = Bytes.empty (0..255B)\nFulfills: [FUNC-006], [TECH-005], [TECH-006]" {
-    class: task_planned
+    class: task_done
   }
 
   task201 -> task202: "Unblocks"
@@ -48,11 +48,11 @@ m2_2: "Milestone 2.2: Deterministic Seed Keygen & NIST ACVP KATs" {
   class: milestone_box
 
   task203: "TASK-203: Deterministic Seed Keygen\nfrom_seed for ML-KEM (d, z) & ML-DSA (xi)\nFulfills: [FUNC-007], [TECH-005], [TECH-007]" {
-    class: task_planned
+    class: task_done
   }
 
   task204: "TASK-204: NIST ACVP KAT Verification Suite\nOfficial Test Vectors Across All 6 Variants\nFulfills: [FUNC-006], [FUNC-007], [TECH-005], [TECH-007]" {
-    class: task_planned
+    class: task_done
   }
 
   task203 -> task204: "Unblocks"
